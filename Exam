@@ -1,0 +1,65 @@
+package cn;
+import java.io.*;
+import java.math.BigInteger;
+import java.util.*;
+
+public class Exam {
+
+    public static void main(String[] args) throws Exception {
+        Scanner sc = new Scanner(System.in);
+        System.out.print("Enter JSON file name (e.g. testcase.json): ");
+        String filePath = sc.nextLine();
+        sc.close();
+        StringBuilder sb = new StringBuilder();
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                sb.append(line).append("\n");
+            }
+        }
+        String jsonInput = sb.toString();
+        int n = extractInt(jsonInput, "\"n\"");
+        int k = extractInt(jsonInput, "\"k\"");
+
+        System.out.println("Number of roots (n): " + n);
+        System.out.println("Minimum required roots (k): " + k);
+        System.out.println("Polynomial degree (m): " + (k - 1));
+
+        Map<Integer, BigInteger> roots = new TreeMap<>();
+        for (int i = 1; i <= n; i++) {
+            String key = "\"" + i + "\"";
+            if (!jsonInput.contains(key)) continue;
+
+            int base = extractInt(jsonInput, key + ".*?\"base\"");
+            String valueStr = extractString(jsonInput, key + ".*?\"value\"");
+
+            BigInteger decimalValue = new BigInteger(valueStr, base);
+            roots.put(i, decimalValue);
+
+            System.out.println("Root " + i + " (base " + base + "): " + valueStr + " → " + decimalValue);
+        }
+
+        List<BigInteger> selectedRoots = new ArrayList<>(roots.values()).subList(0, k);
+
+      
+        BigInteger constant = BigInteger.ONE;
+        for (BigInteger r : selectedRoots) {
+            constant = constant.multiply(r);
+        }
+        if (k % 2 != 0) constant = constant.negate();
+
+        System.out.println("\nConstant term (c) in polynomial = " + constant);
+    }
+
+   
+    private static int extractInt(String text, String key) {
+        String sub = text.substring(text.indexOf(key));
+        String num = sub.replaceAll("[^0-9].*", "");
+        return Integer.parseInt(num);
+    }
+
+    private static String extractString(String text, String key) {
+        String sub = text.substring(text.indexOf(key));
+        return sub.replaceAll(".*?:\\s*\"(.*?)\".*", "$1");
+    }
+}
